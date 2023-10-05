@@ -1,4 +1,6 @@
-const budget = [
+'use strict';
+
+const budget = Object.freeze([
   { value: 250, description: 'Sold old TV 📺', user: 'jonas' },
   { value: -45, description: 'Groceries 🥑', user: 'jonas' },
   { value: 3500, description: 'Monthly salary 👩‍💻', user: 'jonas' },
@@ -7,46 +9,60 @@ const budget = [
   { value: -20, description: 'Candy 🍭', user: 'matilda' },
   { value: -125, description: 'Toys 🚂', user: 'matilda' },
   { value: -1800, description: 'New Laptop 💻', user: 'jonas' },
-];
+]);
 
-const spendingLimits = {
+const spendingLimits = Object.freeze({
   jonas: 1500,
   matilda: 100,
+});
+
+const getSpendingLimit = (spendingLimits, user) => spendingLimits?.[user] ?? 0;
+
+const addExpense = function (
+  budget,
+  spendingLimits,
+  value,
+  description,
+  user = 'jonas'
+) {
+  const transformedUser = user.toLowerCase();
+
+  return value <= getSpendingLimit(spendingLimits, transformedUser)
+    ? [...budget, { value: -value, description, user: transformedUser }]
+    : budget;
 };
 
-const getSpendingLimit = user => spendingLimits?.[user] ?? 0;
+const newBudget1 = addExpense(budget, spendingLimits, 10, 'Pizza 🍕');
+const newBudget2 = addExpense(
+  newBudget1,
+  spendingLimits,
+  100,
+  'Movies 🍿',
+  'Matilda'
+);
+const newBudget3 = addExpense(newBudget2, spendingLimits, 200, 'Stuff', 'Jay');
 
-const addExpense = function (value, description, user = 'jonas') {
-  user = user.toLowerCase();
+const checkExpenses = (budget, spendingLimits) =>
+  budget.map(budgetEntry =>
+    budgetEntry.value < -getSpendingLimit(spendingLimits, budgetEntry.user)
+      ? { ...budgetEntry, flag: true }
+      : budgetEntry
+  );
 
-  if (value <= getSpendingLimit(user)) {
-    budget.push({ value: -value, description, user });
-  }
+const finalBudget = checkExpenses(newBudget3, spendingLimits);
+console.log(finalBudget);
+
+const logExpensesOverInputValue = function (budget, inputValue) {
+  const expensesBiggerThanInput = budget
+    .filter(expense => expense.value <= -inputValue)
+    .map(expense => expense.description.slice(-2))
+    .join(' / ');
+  // .reduce(
+  //   (stringAccumulator, expenseValue) =>
+  //     `${stringAccumulator} ${expenseValue.description.slice(-2)} /`,
+  //   ''
+  // );
+  console.log(expensesBiggerThanInput);
 };
-addExpense(10, 'Pizza 🍕');
-addExpense(100, 'Going to movies 🍿', 'Matilda');
-addExpense(200, 'Stuff', 'Jay');
 
-const checkExpenses = function () {
-  for (let entry of budget) {
-    if (entry.value < -getSpendingLimit(entry.user)) {
-      entry.flag = true;
-    }
-  }
-};
-checkExpenses();
-
-const logExpensesOverInputValue = function (inputValue) {
-  let output = '';
-  for (let entry of budget) {
-    output +=
-      entry.value <= -Number(inputValue)
-        ? `${entry.description.slice(-2)} / `
-        : '';
-  }
-  output = output.slice(0, -2); // Remove last '/ '
-  console.log(output);
-};
-
-console.log(budget);
-logExpensesOverInputValue(500);
+logExpensesOverInputValue(finalBudget, 500);
